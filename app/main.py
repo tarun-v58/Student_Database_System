@@ -1,6 +1,12 @@
-def main():
-    print("Student Database System")
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="Student Database System",
+    description="REST API for managing student records.",
+    version="0.1.0",
+)
 
 
-if __name__ == "__main__":
-    main()
+@app.get("/health")
+def health():
+    return {"status": "ok"}
