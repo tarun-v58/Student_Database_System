@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Secrets and local config (used from Phase 10)
+.env
+
+# IDE settings
+.idea/
+
+# Test and tool caches
+.pytest_cache/
