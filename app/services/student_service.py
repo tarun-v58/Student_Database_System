@@ -1,6 +1,6 @@
-from app.exceptions import DuplicateEmailError, StudentNotFoundError
 from app.repositories.student_repository import StudentRepository
 from app.schemas import StudentCreate, StudentResponse, StudentUpdate
+from app.exceptions import DuplicateEmailError, EmptyUpdateError, StudentNotFoundError
 
 
 class StudentService:
@@ -23,6 +23,8 @@ class StudentService:
 
     def update_student(self, student_id: int, data: StudentUpdate) -> StudentResponse:
         changes = data.model_dump(exclude_unset=True)
+        if not changes:
+            raise EmptyUpdateError()
         updated = self.repository.update(student_id, changes)
         if updated is None:
             raise StudentNotFoundError(student_id)

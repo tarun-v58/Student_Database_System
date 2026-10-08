@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
-from app.exceptions import DuplicateEmailError, StudentNotFoundError
+from app.error_handlers import register_error_handlers
 from app.routers import students
 
 app = FastAPI(
@@ -10,17 +9,8 @@ app = FastAPI(
     version="0.1.0",
 )
 
+register_error_handlers(app)
 app.include_router(students.router)
-
-
-@app.exception_handler(StudentNotFoundError)
-async def student_not_found_handler(request: Request, exc: StudentNotFoundError):
-    return JSONResponse(status_code=404, content={"detail": str(exc)})
-
-
-@app.exception_handler(DuplicateEmailError)
-async def duplicate_email_handler(request: Request, exc: DuplicateEmailError):
-    return JSONResponse(status_code=409, content={"detail": str(exc)})
 
 
 @app.get("/health")
