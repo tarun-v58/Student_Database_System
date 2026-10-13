@@ -7,6 +7,7 @@ from rq import Queue
 from app.exceptions import QueueUnavailableError, ReportNotFoundError
 from app.jobs import generate_student_report
 from app.services.report_service import ReportService
+from app.logging_config import bound_request_id
 
 
 class FakeJob:
@@ -78,3 +79,11 @@ def test_unknown_job_raises_not_found(service, queue):
 
     with pytest.raises(ReportNotFoundError):
         service.get_report("nope")
+
+def test_request_forwards_the_current_request_id_to_the_job(service, queue):
+    queue.enqueue.return_value = FakeJob(id="job-1")
+
+    with bound_request_id("trace-12345678"):
+        service.request_report()
+
+    assert queue.enqueue.call_args.kwargs["request_id"] == "trace-12345678"

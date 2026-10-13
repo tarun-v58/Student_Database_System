@@ -6,6 +6,7 @@ import pytest
 from app.jobs import generate_student_report
 from app.repositories.student_repository import StudentRepository
 from app.schemas import StudentCreate
+from app.logging_config import request_id_var
 
 
 @pytest.fixture
@@ -45,3 +46,17 @@ def test_running_the_job_twice_gives_the_same_result(seeded):
 
     assert first == second
     assert len(list(seeded.glob("*.csv"))) == 1
+
+def test_job_binds_the_request_id_only_while_it_runs(monkeypatch):
+    seen = {}
+
+    def fake_write_report(department):
+        seen["request_id"] = request_id_var.get()
+        return {"file": "x.csv", "rows": 0}
+
+    monkeypatch.setattr("app.jobs._write_report", fake_write_report)
+
+    generate_student_report(request_id="trace-12345678")
+
+    assert seen["request_id"] == "trace-12345678"
+    assert request_id_var.get() is None

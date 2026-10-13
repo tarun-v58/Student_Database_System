@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,8 +20,12 @@ class Settings(BaseSettings):
     db_name: str
 
     sql_echo: bool = False
+
     redis_url: str = "redis://localhost:6379/0"
     reports_dir: str = "reports"
+
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    log_json: bool = False
 
     @property
     def database_url(self) -> URL:

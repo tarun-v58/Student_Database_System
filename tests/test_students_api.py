@@ -24,6 +24,14 @@ def test_create_student(client):
     assert body["email"] == "rahul@example.com"
     assert "created_at" in body
 
+def test_create_rejects_duplicate_email_ignoring_case(client):
+    make(client)
+
+    response = make(client, email="RAHUL@example.com")
+
+    assert response.status_code == 409
+    assert response.json()["error"] == "duplicate_email"
+
 def test_list_students_and_filter_by_department(client):
     make(client)
     make(client, name="Priya Reddy", email="priya@example.com", department="ECE", age=20)

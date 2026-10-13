@@ -3,6 +3,7 @@ from rq import Queue, Retry
 
 from app.exceptions import QueueUnavailableError, ReportNotFoundError
 from app.jobs import generate_student_report
+from app.logging_config import request_id_var
 from app.schemas import ReportStatus
 
 
@@ -21,6 +22,7 @@ class ReportService:
             job = self.queue.enqueue(
                 generate_student_report,
                 department,
+                request_id=request_id_var.get(),
                 retry=Retry(max=3, interval=[5, 15, 30]),
                 job_timeout=60,
                 result_ttl=3600,
