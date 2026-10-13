@@ -33,3 +33,19 @@ class EmptyUpdateError(AppError):
 
     def __init__(self) -> None:
         super().__init__("No fields provided to update")
+
+class ReportNotFoundError(AppError):
+    status_code = 404
+    code = "report_not_found"
+
+    def __init__(self, job_id: str) -> None:
+        self.job_id = job_id
+        super().__init__(f"Report job {job_id} not found (it may have expired)")
+
+
+class QueueUnavailableError(AppError):
+    status_code = 503
+    code = "queue_unavailable"
+
+    def __init__(self) -> None:
+        super().__init__("The job queue is temporarily unavailable")

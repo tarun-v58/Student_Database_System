@@ -1,7 +1,14 @@
+import logging
+
 from fastapi import FastAPI
 
 from app.error_handlers import register_error_handlers
-from app.routers import students
+from app.routers import reports, students
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 app = FastAPI(
     title="Student Database System",
@@ -11,6 +18,7 @@ app = FastAPI(
 
 register_error_handlers(app)
 app.include_router(students.router)
+app.include_router(reports.router)
 
 
 @app.get("/health")

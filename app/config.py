@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     db_name: str
 
     sql_echo: bool = False
+    redis_url: str = "redis://localhost:6379/0"
+    reports_dir: str = "reports"
 
     @property
     def database_url(self) -> URL:

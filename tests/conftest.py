@@ -8,6 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from app.config import get_settings
 from app.database import get_db
 from app.main import app
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 TEST_DB_NAME = "student_test_db"
 SCHEMA_FILE = Path(__file__).resolve().parent.parent / "docs" / "schema.sql"
@@ -62,3 +64,11 @@ def client(session_factory):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def background_task_mocks(monkeypatch):
+    mocks = SimpleNamespace(audit=Mock(), email=Mock())
+    monkeypatch.setattr("app.routers.students.write_audit_log", mocks.audit)
+    monkeypatch.setattr("app.routers.students.send_welcome_email", mocks.email)
+    return mocks

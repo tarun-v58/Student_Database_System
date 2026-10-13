@@ -23,3 +23,16 @@ class StudentResponse(StudentCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
+
+
+class ReportRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    department: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class ReportStatus(BaseModel):
+    job_id: str
+    status: str
+    result: dict | None = None
+    error: str | None = None
