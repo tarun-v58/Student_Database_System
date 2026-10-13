@@ -1,10 +1,22 @@
-from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_, select
 
 from app.exceptions import DuplicateEmailError
 from app.models import Student
 from app.schemas import StudentCreate
+
+SORT_COLUMNS = {
+    "id": Student.id,
+    "name": Student.name,
+    "age": Student.age,
+    "created_at": Student.created_at,
+}
+
+
+def _escape_like(text: str) -> str:
+    """Make %, _ and \\ in user input match literally inside a LIKE pattern."""
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 class StudentRepository:
@@ -52,3 +64,41 @@ class StudentRepository:
         self.db.delete(student)
         self.db.commit()
         return True
+
+
+    def _filtered(self, stmt, department: str | None, search: str | None):
+        if department:
+            stmt = stmt.where(func.lower(Student.department) == department.lower())
+        if search:
+            pattern = f"%{_escape_like(search)}%"
+            stmt = stmt.where(
+                or_(
+                    Student.name.ilike(pattern, escape="\\"),
+                    Student.email.ilike(pattern, escape="\\"),
+                )
+            )
+        return stmt
+
+    def list_page(
+        self,
+        *,
+        department: str | None,
+        search: str | None,
+        sort: str,
+        order: str,
+        page: int,
+        limit: int,
+    ) -> tuple[list[Student], int]:
+        total = self.db.scalar(
+            self._filtered(select(func.count()).select_from(Student), department, search)
+        )
+
+        column = SORT_COLUMNS[sort]
+        primary = column.desc() if order == "desc" else column.asc()
+        stmt = (
+            self._filtered(select(Student), department, search)
+            .order_by(primary, Student.id)
+            .limit(limit)
+            .offset((page - 1) * limit)
+        )
+        return list(self.db.scalars(stmt).all()), total

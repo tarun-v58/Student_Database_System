@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
+
 class StudentCreate(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
@@ -36,3 +37,10 @@ class ReportStatus(BaseModel):
     status: str
     result: dict | None = None
     error: str | None = None
+
+class StudentPage(BaseModel):
+    items: list[StudentResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int

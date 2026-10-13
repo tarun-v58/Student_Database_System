@@ -1,7 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, Response, status
 from app.dependencies import StudentServiceDep
-from app.schemas import StudentCreate, StudentResponse, StudentUpdate
 from app.tasks import send_welcome_email, write_audit_log
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, BackgroundTasks, Query, Response, status
+
+from app.schemas import StudentCreate, StudentPage, StudentResponse, StudentUpdate
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -25,10 +28,24 @@ def create_student(
     )
     return created
 
-
-@router.get("", response_model=list[StudentResponse])
-def list_students(service: StudentServiceDep, department: str | None = None):
-    return service.list_students(department)
+@router.get("", response_model=StudentPage)
+def list_students(
+    service: StudentServiceDep,
+    page: Annotated[int, Query(ge=1, le=100_000)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    search: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+    department: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+    sort: Literal["id", "name", "age", "created_at"] = "id",
+    order: Literal["asc", "desc"] = "asc",
+):
+    return service.list_students(
+        department=department,
+        search=search,
+        sort=sort,
+        order=order,
+        page=page,
+        limit=limit,
+    )
 
 
 @router.get("/{student_id}", response_model=StudentResponse)

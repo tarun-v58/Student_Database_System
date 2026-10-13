@@ -10,5 +10,6 @@ CREATE TABLE students (
 -- One account per email address, ignoring upper/lower case
 CREATE UNIQUE INDEX uq_students_email_lower ON students (lower(email));
 
--- Speeds up filtering by department (used in Phase 15)
-CREATE INDEX ix_students_department ON students (department);
+-- Speeds up case-insensitive department filtering (Phase 15)
+CREATE INDEX ix_students_department_lower ON students (lower(department));
+

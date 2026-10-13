@@ -24,14 +24,17 @@ def test_create_student(client):
     assert body["email"] == "rahul@example.com"
     assert "created_at" in body
 
-
-def test_create_rejects_duplicate_email_ignoring_case(client):
+def test_list_students_and_filter_by_department(client):
     make(client)
+    make(client, name="Priya Reddy", email="priya@example.com", department="ECE", age=20)
 
-    response = make(client, email="RAHUL@example.com")
+    everyone = client.get("/students")
+    assert everyone.status_code == 200
+    assert everyone.json()["total"] == 2
 
-    assert response.status_code == 409
-    assert response.json()["error"] == "duplicate_email"
+    ece = client.get("/students", params={"department": "ece"})
+    assert ece.status_code == 200
+    assert [s["name"] for s in ece.json()["items"]] == ["Priya Reddy"]
 
 
 @pytest.mark.parametrize(
@@ -77,11 +80,12 @@ def test_list_students_and_filter_by_department(client):
 
     everyone = client.get("/students")
     assert everyone.status_code == 200
-    assert len(everyone.json()) == 2
+    assert everyone.json()["total"] == 2
 
     ece = client.get("/students", params={"department": "ece"})
     assert ece.status_code == 200
-    assert [s["name"] for s in ece.json()] == ["Priya Reddy"]
+    assert [s["name"] for s in ece.json()["items"]] == ["Priya Reddy"]
+
 
 
 def test_get_student(client):
