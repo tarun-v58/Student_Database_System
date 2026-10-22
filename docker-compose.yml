@@ -1,0 +1,73 @@
+x-app: &app
+  build: .
+  image: student-api:latest
+  env_file: .env
+  restart: unless-stopped
+  environment:
+    DB_HOST: db
+    DB_PORT: "5432"
+    REDIS_URL: redis://redis:6379/0
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    LOG_JSON: ${LOG_JSON:-false}
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:?DB_USER is not set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME is not set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  student-api:
+    <<: *app
+    container_name: student-api
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *app
+    command: ["rq", "worker", "reports", "--url", "redis://redis:6379/0", "--with-scheduler"]
+    volumes:
+      - reports_data:/app/reports
+
+  nginx:
+    image: nginx:alpine
+    container_name: student-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/sites-available:/etc/nginx/conf.d:ro
+    depends_on:
+      - student-api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  reports_data:
