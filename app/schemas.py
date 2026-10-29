@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
+from typing import Literal
 
 
 class StudentCreate(BaseModel):
@@ -44,3 +44,13 @@ class StudentPage(BaseModel):
     page: int
     limit: int
     pages: int
+
+
+class CheckResult(BaseModel):
+    status: Literal["ok", "fail"]
+    latency_ms: float
+
+
+class ReadinessReport(BaseModel):
+    status: Literal["ok", "degraded", "unavailable"]
+    checks: dict[str, CheckResult]

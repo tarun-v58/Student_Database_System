@@ -19,6 +19,8 @@ def _log_request(request: Request, status_code: int, started: float) -> None:
         level = logging.ERROR
     elif duration_ms > SLOW_REQUEST_MS:
         level = logging.WARNING
+    elif request.url.path.startswith("/health") and status_code < 400:
+        level = logging.DEBUG
     else:
         level = logging.INFO
 
@@ -37,7 +39,6 @@ def _log_request(request: Request, status_code: int, started: float) -> None:
             "duration_ms": duration_ms,
         },
     )
-
 
 async def request_logging_middleware(request: Request, call_next):
     incoming = request.headers.get("X-Request-ID", "")
