@@ -45,7 +45,21 @@ except Exception:
     print("")
 ' "$1"
 }
+jlen() {  # echo "$BODY" | jlen items   (length of a JSON list, empty if missing)
+  python3 -c '
+import json, sys
+try:
+    print(len(json.load(sys.stdin)[sys.argv[1]]))
+except Exception:
+    print("")
+' "$1"
+}
 
+
+if ! curl -s -o /dev/null --max-time 5 "$BASE/health"; then
+  echo "Cannot reach $BASE. Is the stack running, and is the port right?"
+  exit 2
+fi
 echo "Health"
 request GET /health
 check "liveness returns 200" 200 "$CODE"
@@ -89,7 +103,7 @@ check "missing student error code" student_not_found "$(echo "$BODY" | jget erro
 request GET "/students?search=$EMAIL&limit=5"
 check "search finds exactly our student" 1 "$(echo "$BODY" | jget total)"
 request GET "/students?limit=1"
-check "pagination returns one item" 1 "$(echo "$BODY" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)["items"]))')"
+check "pagination returns one item" 1 "$(echo "$BODY" | jlen items)"
 request GET "/students?limit=500"
 check "limit above 100 returns 422" 422 "$CODE"
 request GET /nothing
